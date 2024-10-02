@@ -209,7 +209,7 @@ function createEndpoint() {
 					}
 					*/
 					// Send the request to create the endpoint
-					let create = { id: id, room: roomNum };
+					let create = { id: id, room: room };
 					if(pin && pin !== '')
 						create.pin = pin;
 					if(display && display !== '')
