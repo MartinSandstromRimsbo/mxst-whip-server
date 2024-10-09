@@ -407,6 +407,7 @@ function setupRest(app) {
         };
         // Modify the SDP based on the format
         console.log('using format ', format)
+        console.log('original SDP:', details.jsep)
         details.jsep = modifySDPForMultichannel(details.jsep, format);
         // console.log('skipped modifying sdp');
         console.log('Modified SDP:', details.jsep.sdp);
