@@ -37,9 +37,7 @@ var endpoints = {}, resources = {};
 function modifySDPForMultichannel(sdp, format) {
     let audioFormat = '';
     let channelMapping = '';
-
-    // Log the original SDP to track changes
-    console.log("Original SDP:", sdp.sdp);
+    let audioFmtpLine = '';
 
     if (format === '5.1') {
         audioFormat = 'multiopus/48000/6';
@@ -53,25 +51,31 @@ function modifySDPForMultichannel(sdp, format) {
         channelMapping = 'stereo=1; sprop-stereo=1;';
     }
 
-    // Ensure we're replacing the correct fields
-    sdp.sdp = sdp.sdp.replace(/stereo=1;?\s*/g, '');
-    sdp.sdp = sdp.sdp.replace(/sprop-stereo=1;?\s*/g, '');
-    sdp.sdp = sdp.sdp.replace(/sprop-useinbandfec=1;?\s*/g, '');  // Ensure sprop-useinbandfec is removed
-    
-    // Replace opus/48000/2 with the desired format (multiopus or opus)
-    sdp.sdp = sdp.sdp.replace(/opus\/48000\/2/g, audioFormat);
+    // Split the SDP into lines
+    let sdpLines = sdp.sdp.split("\r\n");
 
-    // Correct `useinbandfec` and add the channel mapping
-    sdp.sdp = sdp.sdp.replace(/useinbandfec=1/g, `useinbandfec=1;${channelMapping}`);
+    // Loop through the SDP lines to find audio related lines and modify them
+    for (let i = 0; i < sdpLines.length; i++) {
+        if (sdpLines[i].includes("a=rtpmap:111 opus/48000/2")) {
+            // Replace the audio format
+            sdpLines[i] = sdpLines[i].replace("opus/48000/2", audioFormat);
+        }
+        if (sdpLines[i].startsWith("a=fmtp:111")) {
+            // Modify the fmtp line for the correct format, removing unnecessary stereo settings
+            audioFmtpLine = sdpLines[i];
+            audioFmtpLine = audioFmtpLine.replace(/stereo=1;?\s*/g, '');
+            audioFmtpLine = audioFmtpLine.replace(/sprop-stereo=1;?\s*/g, '');
+            audioFmtpLine = audioFmtpLine.replace("useinbandfec=1", `useinbandfec=1;${channelMapping}`);
+            sdpLines[i] = audioFmtpLine;
+        }
+    }
 
-    // Log the modified SDP to verify changes
+    // Join the modified SDP lines back into a string
+    sdp.sdp = sdpLines.join("\r\n");
+
     console.log("Modified SDP:", sdp.sdp);
-
     return sdp;
 }
-
-
-
 
 
 // Startup
