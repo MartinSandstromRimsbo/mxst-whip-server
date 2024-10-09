@@ -60,6 +60,10 @@ function modifySDPForMultichannel(sdp, format) {
             // Replace the audio format
             sdpLines[i] = sdpLines[i].replace("opus/48000/2", audioFormat);
         }
+        if (sdpLines[i].includes("a=sendonly")) {
+            sdpLines[i] = sdpLines[i].replace("sendonly", "inactive");
+        }
+
         if (sdpLines[i].startsWith("a=fmtp:111")) {
             // Modify the fmtp line for the correct format, removing unnecessary stereo settings
             audioFmtpLine = sdpLines[i];
