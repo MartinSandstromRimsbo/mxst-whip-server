@@ -54,14 +54,15 @@ function modifySDPForMultichannel(sdp, format) {
     sdp.sdp = sdp.sdp.replace(/stereo=1;?\s*/g, '');
     sdp.sdp = sdp.sdp.replace(/sprop-stereo=1;?\s*/g, '');
 
-    // Replace default opus format with the desired audio format
+    // Replace the default opus format with the desired audio format
     sdp.sdp = sdp.sdp.replace('opus/48000/2', audioFormat);
     
-    // Add the appropriate channel mapping and correct useinbandfec
+    // Correct `useinbandfec` and channel mapping
     sdp.sdp = sdp.sdp.replace('useinbandfec=1', `useinbandfec=1;${channelMapping}`);
 
     return sdp;
 }
+
 
 
 
