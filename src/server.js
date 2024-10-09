@@ -63,8 +63,8 @@ function modifySDPForMultichannel(sdp, format) {
         if (sdpLines[i].startsWith("a=fmtp:111")) {
             // Modify the fmtp line for the correct format, removing unnecessary stereo settings
             audioFmtpLine = sdpLines[i];
-            audioFmtpLine = audioFmtpLine.replace(/stereo=1;?\s*/g, '');
             audioFmtpLine = audioFmtpLine.replace(/sprop-stereo=1;?\s*/g, '');
+            audioFmtpLine = audioFmtpLine.replace(/stereo=1;?\s*/g, '');
             audioFmtpLine = audioFmtpLine.replace("useinbandfec=1", `useinbandfec=1;${channelMapping}`);
             sdpLines[i] = audioFmtpLine;
         }
