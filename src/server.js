@@ -397,9 +397,10 @@ function setupRest(app) {
             pwd: endpoint.sdpOffer.match(/a=ice-pwd:(.*)\r\n/)[1]
         };
         // Modify the SDP based on the format
-        details.jsep = modifySDPForMultichannel(details.jsep, format);
+        //details.jsep = modifySDPForMultichannel(details.jsep, format);
+        console.log('skipped modifying sdp');
         console.log('Modified SDP:', details.jsep.sdp);
-
+ 
         // Publish
         janus.publish(details, function (err, result) {
             // Make sure we got an ANSWER back
