@@ -50,18 +50,24 @@ function modifySDPForMultichannel(sdp, format) {
         channelMapping = 'stereo=1; sprop-stereo=1;';
     }
 
+    // Make regex case-insensitive and allow for slight formatting variations
+    const stereoRegex = /opus\/48000\/2/i;
+    const stereoParamsRegex = /stereo=1;?\s*/gi;
+    const spropStereoRegex = /sprop-stereo=1;?\s*/gi;
+
     // Remove any occurrences of 'stereo=1' and 'sprop-stereo=1'
-    sdp.sdp = sdp.sdp.replace(/stereo=1;?\s*/g, '');
-    sdp.sdp = sdp.sdp.replace(/sprop-stereo=1;?\s*/g, '');
+    sdp.sdp = sdp.sdp.replace(stereoParamsRegex, '');
+    sdp.sdp = sdp.sdp.replace(spropStereoRegex, '');
 
     // Replace default opus format with the desired audio format
-    sdp.sdp = sdp.sdp.replace('opus/48000/2', audioFormat);
+    sdp.sdp = sdp.sdp.replace(stereoRegex, audioFormat);
     
     // Add the appropriate channel mapping to the SDP
     sdp.sdp = sdp.sdp.replace('useinbandfec=1', `useinbandfec=1;${channelMapping}`);
 
     return sdp;
 }
+
 
 // Startup
 async.series([
