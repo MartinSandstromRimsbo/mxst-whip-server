@@ -40,10 +40,10 @@ function modifySDPForMultichannel(sdp, format) {
     let audioFmtpLine = '';
 
     if (format === '5.1') {
-        audioFormat = 'multiopus/48000/6';
+        audioFormat = 'opus/48000/6';
         channelMapping = 'channel_mapping=0,1,4,5,2,3;num_streams=4;coupled_streams=2';
     } else if (format === '7.1') {
-        audioFormat = 'multiopus/48000/8';
+        audioFormat = 'opus/48000/8';
         channelMapping = 'channel_mapping=0,6,1,2,3,4,5,7;num_streams=5;coupled_streams=3';
     } else {
         // Default to stereo
