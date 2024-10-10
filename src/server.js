@@ -34,50 +34,33 @@ const config = require('./config.js');
 var janus = null;
 var endpoints = {}, resources = {};
 
+// THIS IS HERE TO FOOL JANUS INTO ACCEPTING STREAMS, WE THEN CUSTOMISE THE SDP AFTER NEGOTIATION IS COMPLETED
 function modifySDPForMultichannel(sdp, format) {
-    let audioFormat = '';
-    let channelMapping = '';
-    let audioFmtpLine = '';
+    let audioFormat = 'opus/48000/2';  // Default to stereo
+    let channelMapping = 'stereo=1;';  // Channel mapping for stereo
 
-    // Multiopus support, modify Opus format for multi-channel audio
     if (format === '5.1') {
-        audioFormat = 'opus/48000/6';  // 6 channels for 5.1 surround
-        channelMapping = 'channel_mapping=0,1,4,5,2,3;num_streams=4;coupled_streams=2';
-    } else if (format === '7.1') {
-        audioFormat = 'opus/48000/8';  // 8 channels for 7.1 surround
-        channelMapping = 'channel_mapping=0,6,1,2,3,4,5,7;num_streams=5;coupled_streams=3';
-    } else {
-        // Default to stereo
-        audioFormat = 'opus/48000/2';  // Stereo format
-        channelMapping = 'stereo=1; sprop-stereo=1;';
+        audioFormat = 'multiopus/48000/6';  // Set multiopus for 5.1
+        channelMapping = 'channel_mapping=0,1,4,5,2,3;num_streams=4;coupled_streams=2;';
     }
 
-    // Split the SDP into lines
     let sdpLines = sdp.sdp.split("\r\n");
 
-    // Loop through the SDP lines to find and modify audio-related lines
+    // Modify the rtpmap and fmtp lines for Opus
     for (let i = 0; i < sdpLines.length; i++) {
-        if (sdpLines[i].includes("a=rtpmap:111 opus/48000/2")) {
-            // Replace the default stereo Opus format with the multi-channel format
-            sdpLines[i] = sdpLines[i].replace("opus/48000/2", audioFormat);
+        if (sdpLines[i].includes("a=rtpmap:111 opus/48000")) {
+            sdpLines[i] = `a=rtpmap:111 ${audioFormat}`;
         }
 
         if (sdpLines[i].startsWith("a=fmtp:111")) {
-            // Modify the fmtp line for multi-channel support
-            audioFmtpLine = sdpLines[i];
-            audioFmtpLine = audioFmtpLine.replace(/sprop-stereo=1;?\s*/g, '');
-            audioFmtpLine = audioFmtpLine.replace(/stereo=1;?\s*/g, '');
-            audioFmtpLine = audioFmtpLine.replace("useinbandfec=1", `useinbandfec=1;${channelMapping}`);
-            sdpLines[i] = audioFmtpLine;
+            sdpLines[i] = `a=fmtp:111 useinbandfec=1;${channelMapping}`;
         }
     }
 
-    // Join the modified SDP lines back into a string
     sdp.sdp = sdpLines.join("\r\n");
-
-    console.log("Modified SDP:", sdp.sdp);
     return sdp;
 }
+
 
 
 
@@ -424,9 +407,9 @@ function setupRest(app) {
         // Modify the SDP based on the format
         console.log('using format ', format)
         console.log('original SDP:', details.jsep)
-        // details.jsep = modifySDPForMultichannel(details.jsep, format);
-        console.log('skipped modifying sdp');
-        console.log('Modified SDP:', details.jsep.sdp);
+        details.jsep = modifySDPForMultichannel(details.jsep, format);
+        // console.log('skipped modifying sdp');
+        console.log('Modified SDP - only for janus config:', details.jsep.sdp);
  
         // Publish
         janus.publish(details, function (err, result) {
