@@ -36,27 +36,46 @@ var endpoints = {}, resources = {};
 
 // THIS IS HERE TO FOOL JANUS INTO ACCEPTING STREAMS, WE THEN CUSTOMISE THE SDP AFTER NEGOTIATION IS COMPLETED
 function modifySDPForMultichannel(sdp, format) {
+    let audioFormat = '';
+    let channelMapping = '';
+
+    // Check the format and set the right values for Opus or Multiopus
+    if (format === '5.1') {
+        audioFormat = 'multiopus/48000/6';
+        channelMapping = 'channel_mapping=0,1,4,5,2,3;num_streams=4;coupled_streams=2';
+    } else if (format === '7.1') {
+        audioFormat = 'multiopus/48000/8';
+        channelMapping = 'channel_mapping=0,6,1,2,3,4,5,7;num_streams=5;coupled_streams=3';
+    } else {
+        // Default to stereo
+        audioFormat = 'opus/48000/2';
+        channelMapping = 'stereo=1; sprop-stereo=1;';
+    }
+
+    // Split SDP into lines for easier processing
     let sdpLines = sdp.sdp.split("\r\n");
 
-    // Loop through the SDP lines and replace MULTIOPUS with Opus
+    // Loop through the SDP lines and make necessary changes
     for (let i = 0; i < sdpLines.length; i++) {
-        // Check for MULTIOPUS/multiopus and replace it with opus/48000/2
+        // Detect any reference to multiopus and replace it with opus/48000/2
         if (sdpLines[i].includes("rtpmap") && sdpLines[i].match(/multiopus\/48000/i)) {
             sdpLines[i] = sdpLines[i].replace(/multiopus\/48000\/\d+/i, 'opus/48000/2');
         }
 
-        // Modify the fmtp line to enforce stereo settings
+        // Modify the fmtp line to enforce stereo settings for negotiation
         if (sdpLines[i].startsWith("a=fmtp:")) {
-            sdpLines[i] = `a=fmtp:111 useinbandfec=1;stereo=1;sprop-stereo=1`;
+            // Remove any existing stereo or multi-channel settings
+            sdpLines[i] = sdpLines[i].replace(/stereo=1;?|channel_mapping=.*?;/, '');
+            sdpLines[i] = `a=fmtp:111 useinbandfec=1;${channelMapping}`;
         }
     }
 
-    // Rejoin the SDP lines into a single string
+    // Reassemble the SDP after modifications
     sdp.sdp = sdpLines.join("\r\n");
 
-    // Return the modified SDP
     return sdp;
 }
+
 
 
 
