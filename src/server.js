@@ -36,37 +36,25 @@ var endpoints = {}, resources = {};
 
 // THIS IS HERE TO FOOL JANUS INTO ACCEPTING STREAMS, WE THEN CUSTOMISE THE SDP AFTER NEGOTIATION IS COMPLETED
 function modifySDPForMultichannel(sdp, format) {
-    let audioFormat = 'opus/48000/2';  // Default to stereo
-    let channelMapping = 'stereo=1;';  // Channel mapping for stereo
-    let payloadType = null;
-
-    // Adjust the audio format and channel mapping based on the specified format
-    if (format === '5.1') {
-        audioFormat = 'multiopus/48000/6';  // Set multiopus for 5.1
-        channelMapping = 'channel_mapping=0,1,4,5,2,3;num_streams=4;coupled_streams=2;';
-    }
-
     let sdpLines = sdp.sdp.split("\r\n");
 
-    // Look for the rtpmap line to find the payload type for Opus/MultiOpus
+    // Loop through the SDP lines and replace MULTIOPUS with Opus
     for (let i = 0; i < sdpLines.length; i++) {
-        if (sdpLines[i].includes("rtpmap") && sdpLines[i].includes("opus/48000")) {
-            // Extract the payload type (e.g., 96, 111, etc.)
-            let match = sdpLines[i].match(/a=rtpmap:(\d+)\sopus\/48000/i);
-            if (match) {
-                payloadType = match[1];  // Capture the payload type number
-                // Modify the rtpmap line for multiopus
-                sdpLines[i] = `a=rtpmap:${payloadType} ${audioFormat}`;
-            }
+        // Check for MULTIOPUS/multiopus and replace it with opus/48000/2
+        if (sdpLines[i].includes("rtpmap") && sdpLines[i].match(/multiopus\/48000/i)) {
+            sdpLines[i] = sdpLines[i].replace(/multiopus\/48000\/\d+/i, 'opus/48000/2');
         }
 
-        // Modify the fmtp line corresponding to the identified payload type
-        if (payloadType && sdpLines[i].startsWith(`a=fmtp:${payloadType}`)) {
-            sdpLines[i] = `a=fmtp:${payloadType} useinbandfec=1;${channelMapping}`;
+        // Modify the fmtp line to enforce stereo settings
+        if (sdpLines[i].startsWith("a=fmtp:")) {
+            sdpLines[i] = `a=fmtp:111 useinbandfec=1;stereo=1;sprop-stereo=1`;
         }
     }
 
+    // Rejoin the SDP lines into a single string
     sdp.sdp = sdpLines.join("\r\n");
+
+    // Return the modified SDP
     return sdp;
 }
 
