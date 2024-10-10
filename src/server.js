@@ -68,8 +68,6 @@ function modifySDPForMultichannel(sdp, format) {
             audioFmtpLine = audioFmtpLine.replace(/sprop-stereo=1;?\s*/g, '');
             audioFmtpLine = audioFmtpLine.replace(/stereo=1;?\s*/g, '');
             audioFmtpLine = audioFmtpLine.replace("useinbandfec=1", `useinbandfec=1;${channelMapping}`);
-            audioFmtpLine = audioFmtpLine.replace("sprop-maxcapturerate=48000", 'maxcapturerate=48000');
-
             sdpLines[i] = audioFmtpLine;
         }
     }
@@ -426,8 +424,8 @@ function setupRest(app) {
         // Modify the SDP based on the format
         console.log('using format ', format)
         console.log('original SDP:', details.jsep)
-        details.jsep = modifySDPForMultichannel(details.jsep, format);
-        // console.log('skipped modifying sdp');
+        // details.jsep = modifySDPForMultichannel(details.jsep, format);
+        console.log('skipped modifying sdp');
         console.log('Modified SDP:', details.jsep.sdp);
  
         // Publish
