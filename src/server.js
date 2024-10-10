@@ -38,7 +38,9 @@ var endpoints = {}, resources = {};
 function modifySDPForMultichannel(sdp, format) {
     let audioFormat = 'opus/48000/2';  // Default to stereo
     let channelMapping = 'stereo=1;';  // Channel mapping for stereo
+    let payloadType = null;
 
+    // Adjust the audio format and channel mapping based on the specified format
     if (format === '5.1') {
         audioFormat = 'multiopus/48000/6';  // Set multiopus for 5.1
         channelMapping = 'channel_mapping=0,1,4,5,2,3;num_streams=4;coupled_streams=2;';
@@ -46,20 +48,28 @@ function modifySDPForMultichannel(sdp, format) {
 
     let sdpLines = sdp.sdp.split("\r\n");
 
-    // Modify the rtpmap and fmtp lines for Opus
+    // Look for the rtpmap line to find the payload type for Opus/MultiOpus
     for (let i = 0; i < sdpLines.length; i++) {
-        if (sdpLines[i].includes("a=rtpmap:111 opus/48000")) {
-            sdpLines[i] = `a=rtpmap:111 ${audioFormat}`;
+        if (sdpLines[i].includes("rtpmap") && sdpLines[i].includes("opus/48000")) {
+            // Extract the payload type (e.g., 96, 111, etc.)
+            let match = sdpLines[i].match(/a=rtpmap:(\d+)\sopus\/48000/i);
+            if (match) {
+                payloadType = match[1];  // Capture the payload type number
+                // Modify the rtpmap line for multiopus
+                sdpLines[i] = `a=rtpmap:${payloadType} ${audioFormat}`;
+            }
         }
 
-        if (sdpLines[i].startsWith("a=fmtp:111")) {
-            sdpLines[i] = `a=fmtp:111 useinbandfec=1;${channelMapping}`;
+        // Modify the fmtp line corresponding to the identified payload type
+        if (payloadType && sdpLines[i].startsWith(`a=fmtp:${payloadType}`)) {
+            sdpLines[i] = `a=fmtp:${payloadType} useinbandfec=1;${channelMapping}`;
         }
     }
 
     sdp.sdp = sdpLines.join("\r\n");
     return sdp;
 }
+
 
 
 
