@@ -68,6 +68,8 @@ function modifySDPForMultichannel(sdp, format) {
             audioFmtpLine = audioFmtpLine.replace(/sprop-stereo=1;?\s*/g, '');
             audioFmtpLine = audioFmtpLine.replace(/stereo=1;?\s*/g, '');
             audioFmtpLine = audioFmtpLine.replace("useinbandfec=1", `useinbandfec=1;${channelMapping}`);
+            audioFmtpLine = audioFmtpLine.replace("sprop-maxcapturerate", 'maxcapturerate');
+
             sdpLines[i] = audioFmtpLine;
         }
     }
